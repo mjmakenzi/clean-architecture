@@ -22,11 +22,12 @@ import {
 } from '@constants';
 import { AuthUser } from '@domain/entities/Auth';
 import { Role } from '@domain/entities/enums/role.enum';
-import { IAuthRepository } from '@domain/interfaces/repositories/auth-repository.interface';
-import { IProfileRepository } from '@domain/interfaces/repositories/profile-repository.interface';
+import type { IAuthRepository } from '@domain/interfaces/repositories/auth-repository.interface';
+import type { IProfileRepository } from '@domain/interfaces/repositories/profile-repository.interface';
 import { AuthDomainService } from '@domain/services/auth-domain.service';
 import { LoggerService } from '@application/services/logger.service';
 import { ProfileDomainService } from '@domain/services/profile-domain.service';
+import type { Profile } from '@domain/entities/Profile';
 
 @Injectable()
 export class AuthService {
@@ -77,7 +78,7 @@ export class AuthService {
       lastLoginAt: new Date(),
     });
 
-    let profile = null;
+    let profile: Profile | null = null;
     try {
       profile = await this.profileRepository.findByAuthId(authId);
     } catch (_error) {
@@ -294,6 +295,11 @@ export class AuthService {
   }
 
   initiateGoogleAuth() {
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CALLBACK_URL) {
+      throw new Error(
+        'GOOGLE_CLIENT_ID and GOOGLE_CALLBACK_URL must be set for Google OAuth',
+      );
+    }
     const state = crypto.randomBytes(20).toString('hex');
     const redirectUrl =
       'https://accounts.google.com/o/oauth2/v2/auth?' +

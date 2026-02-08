@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileDto } from '@api/dto/create-profile.dto';
 import { Profile } from '@domain/entities/Profile';
 import { Role } from '@domain/entities/enums/role.enum';
-import { IProfileRepository } from '@domain/interfaces/repositories/profile-repository.interface';
+import type { IProfileRepository } from '@domain/interfaces/repositories/profile-repository.interface';
 import { LoggerService } from '@application/services/logger.service';
 import { ProfileDomainService } from '@domain/services/profile-domain.service';
 

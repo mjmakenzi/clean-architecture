@@ -17,31 +17,67 @@ export class AuthRepository implements IAuthRepository {
     return savedAuth.toObject() as AuthUser;
   }
 
-  findById(id: string, withPassword?: boolean): Promise<AuthUser | null> {
-    throw new Error('Method not implemented.');
+  async findByEmail(
+    email: string,
+    withPassword?: boolean,
+  ): Promise<AuthUser | null> {
+    const emailHash = createBlindIndex(email);
+    const query = this.authModel.findOne({ emailHash, deletedAt: null });
+    if (withPassword) {
+      query.select('+password');
+    }
+    const auth = await query.exec();
+    return auth ? (auth.toObject() as AuthUser) : null;
   }
 
-  async findByEmail(email: string): Promise<AuthUser | null> {
-    const emailHash = createBlindIndex(email);
+  async findById(id: string, withPassword?: boolean): Promise<AuthUser | null> {
+    const query = this.authModel
+      .findOne({ id, deletedAt: null })
+      .select('+currentHashedRefreshToken');
+
+    if (withPassword) {
+      query.select('+password');
+    }
+
+    const auth = await query.exec();
+    return auth ? (auth.toObject() as AuthUser) : null;
+  }
+
+  async findByGoogleId(googleId: string): Promise<AuthUser | null> {
     const auth = await this.authModel
-      .findOne({ emailHash, deletedAt: null })
+      .findOne({ googleId, deletedAt: null })
       .exec();
     return auth ? (auth.toObject() as AuthUser) : null;
   }
 
-  findByGoogleId(googleId: string): Promise<AuthUser | null> {
-    throw new Error('Method not implemented.');
+  async update(id: string, authData: Partial<AuthUser>): Promise<AuthUser> {
+    const updatedAuth = await this.authModel
+      .findOneAndUpdate(
+        { id, deletedAt: null },
+        { $set: authData },
+        { new: true },
+      )
+      .exec();
+
+    if (!updatedAuth) {
+      throw new Error('Auth user not found');
+    }
+
+    return updatedAuth.toObject() as AuthUser;
   }
 
-  update(id: string, user: Partial<AuthUser>): Promise<AuthUser> {
-    throw new Error('Method not implemented.');
+  async delete(id: string): Promise<void> {
+    await this.authModel
+      .updateOne({ id, deletedAt: null }, { $set: { deletedAt: new Date() } })
+      .exec();
   }
 
-  delete(id: string): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-
-  removeRefreshToken(userId: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async removeRefreshToken(id: string): Promise<void> {
+    await this.authModel
+      .updateOne(
+        { id, deletedAt: null },
+        { $set: { currentHashedRefreshToken: null } },
+      )
+      .exec();
   }
 }

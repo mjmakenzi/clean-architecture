@@ -6,7 +6,7 @@ export class AuthUser {
   password: string;
   googleId?: string;
   role: Role[];
-  currentHashedRefreshToken?: string;
+  currentHashedRefreshToken?: string | null;
   lastLoginAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
